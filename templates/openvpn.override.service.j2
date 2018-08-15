@@ -1,0 +1,3 @@
+{{ ansible_managed|comment(decoration='# ') }}
+
+ExecStart={{ openvpn__service_executable }} --daemon ovpn-%i --status /run/openvpn/%i.status 10 --cd {{ openvpn__configuration_directory }} --config /etc/openvpn/%i.conf --writepid {{ openvpn__service_pidfile }}

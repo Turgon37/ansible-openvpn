@@ -4,12 +4,12 @@
   package:
     name: '{{ item }}'
     state: present
-  with_items: '{{ openvpn_server__required_packages_names }}'
+  with_items: '{{ openvpn__required_packages_names }}'
 
 - name: Fail if architecture is not supported
   fail:
     msg: '{{ ansible_architecture }} architecture is not supported'
-  when: openvpn_server__packages_source == 'openvpn'
+  when: openvpn__packages_source == 'openvpn'
     and ansible_architecture not in ['x86_64']
 
 - name: Include installation tasks from openvpn repository
@@ -18,7 +18,7 @@
     - files:
         - 'install-openvpn-{{ ansible_distribution }}.yml'
         - 'install-openvpn-{{ ansible_os_family }}.yml'
-  when: openvpn_server__packages_source == 'openvpn'
+  when: openvpn__packages_source == 'openvpn'
   loop_control:
     loop_var: file_item
 

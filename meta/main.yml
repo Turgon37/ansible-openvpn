@@ -1,8 +1,8 @@
 ---
 galaxy_info:
-  role_name: openvpn_server
+  role_name: openvpn
   author: Pierre GINDRAUD
-  description: This role install and configure OpenVPN server
+  description: This role install and configure OpenVPN
   license: MIT
   min_ansible_version: 2.4
   platforms:

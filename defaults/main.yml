@@ -1,24 +1,24 @@
 ---
-# defaults file for ansible-openvpn-server
+# defaults file for ansible-openvpn
 
 # Enable facts deploiement
-openvpn_server__facts: true
+openvpn__facts: true
 
 # Choose the monitoring backend to configure (if available)
-# openvpn_server__monitoring:
+# openvpn__monitoring:
 
 
 ### INSTALL CONFIGURATION
 # ---------------------------------------
 # The openvpn version to install (as the ones available in repositories)
-openvpn_server__version: latest
+openvpn__version: latest
 
 # Choose the source of openvpn installation
 # in os, openvpn
-openvpn_server__packages_source: os
+openvpn__packages_source: os
 
 # Optional pre-install required packages names
-openvpn_server__required_packages_names: []
+openvpn__required_packages_names: []
 
 # see vars/
 # openvpn__packages_names:
@@ -26,19 +26,53 @@ openvpn_server__required_packages_names: []
 # Choose which branch to track version from
 # see https://community.openvpn.net/openvpn/wiki/OpenvpnSoftwareRepos
 # in 'stable', 'testing', 'release/2.3', 'release/2.4'
-openvpn_server__provider_version: stable
+openvpn__provider_version: stable
 
 # List of GPG keys per distributions
-openvpn_server__provider_gpg_keys:
+openvpn__provider_gpg_keys:
   Debian:
     - id: 30EBF4E73CCE63EEE124DD278E6DA8B4E158C569
       url: https://swupdate.openvpn.net/repos/repo-public.gpg
 
 # List of packages repositories per distributions
-openvpn_server__provider_repositories:
+openvpn__provider_repositories:
   Debian:
     - >-
       deb
-      http://build.openvpn.net/debian/openvpn/{{ openvpn_server__provider_version }}
+      http://build.openvpn.net/debian/openvpn/{{ openvpn__provider_version }}
       {{ ansible_distribution_release }}
       main
+
+
+### SERVICE CONFIGURATION
+# ---------------------------------------
+# The user and group that exporter will run as
+openvpn__service_user: openvpn
+openvpn__service_group: '{{ openvpn__service_user }}'
+
+# The name of the dhcp service
+openvpn__service_name: 'openvpn@%i'
+
+# Determine if the service will be enabled
+openvpn__service_enabled: true
+
+# optional path to old sysv init script to remove
+# openvpn__service_sysvinit_file:
+
+# The main configuration directory of openvpn_server
+openvpn__configuration_directory: /etc/openvpn
+
+# Path to openvpn_server binary
+openvpn__service_executable: /usr/sbin/openvpn
+
+# Path to pid file per instances
+openvpn__service_pidfile: '/run/openvpn/%i.pid'
+
+
+### OPENVPN CONFIGURATION
+# ---------------------------------------
+# Dict of openvpn instances
+openvpn__instances: {}
+
+# Define default values for all instances
+openvpn__instance_defaults: {}

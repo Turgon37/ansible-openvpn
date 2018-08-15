@@ -1,0 +1,27 @@
+---
+
+- name: Ensure configuration directories exists
+  file:
+    path: '{{ item }}'
+    owner: root
+    group: root
+    mode: 0755
+    state: directory
+  with_items:
+    - '{{ openvpn__configuration_directory }}'
+
+- name: Create the openvpn group
+  group:
+    name: '{{ openvpn__service_group }}'
+    system: true
+    state: present
+
+- name: Create the openvpn user
+  user:
+    name: '{{ openvpn__service_user }}'
+    groups: '{{ openvpn__service_group }}'
+    shell: /usr/sbin/nologin
+    system: true
+    createhome: false
+    home: '{{ openvpn__configuration_directory }}'
+    state: present

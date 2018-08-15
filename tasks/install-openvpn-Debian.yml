@@ -5,20 +5,20 @@
     id: '{{ item.id }}'
     url: '{{ item.url }}'
     state: "{{ item.state|d('present') }}"
-  with_items: '{{ openvpn_server__provider_gpg_keys[ansible_distribution] }}'
+  with_items: '{{ openvpn__provider_gpg_keys[ansible_distribution] }}'
   ignore_errors: '{{ http_proxy is defined }}'
-  register: _openvpn_server__apt_key
-  tags: ['openvpn-server', 'openvpn-server-install']
+  register: _openvpn__apt_key
+  tags: ['openvpn', 'openvpn-install']
 
 - name: Add repository APT key using http proxy
   shell: 'curl --location --proxy "{{ http_proxy }}" "{{ item.url }}" | apt-key add -'
-  with_items: '{{ openvpn_server__provider_gpg_keys[ansible_distribution] }}'
-  when: _openvpn_server__apt_key is failed and http_proxy is defined
-  tags: ['openvpn-server', 'openvpn-server-install']
+  with_items: '{{ openvpn__provider_gpg_keys[ansible_distribution] }}'
+  when: _openvpn__apt_key is failed and http_proxy is defined
+  tags: ['openvpn', 'openvpn-install']
 
 - name: Add openvpn repository for Debian
   apt_repository:
     repo: '{{ item }}'
     filename: openvpn
-  with_items: '{{ openvpn_server__provider_repositories[ansible_distribution] }}'
-  tags: ['openvpn-server', 'openvpn-server-install']
+  with_items: '{{ openvpn__provider_repositories[ansible_distribution] }}'
+  tags: ['openvpn', 'openvpn-install']
