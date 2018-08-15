@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  role_name: openvpn_server
+  author: Pierre GINDRAUD
+  description: This role install and configure OpenVPN server
+  license: MIT
+  min_ansible_version: 2.4
+  platforms:
+    - name: Debian
+      versions:
+        - jessie
+        - stretch
+  galaxy_tags:
+    - openvpn
+
+dependencies: []

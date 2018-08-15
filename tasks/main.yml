@@ -1,0 +1,31 @@
+---
+# tasks file for ansible-openvpn-server
+
+- name: Include the OS specific variables
+  include_vars: '{{ item }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml'
+        - '{{ ansible_distribution }}.yml'
+        - '{{ ansible_os_family }}.yml'
+        - defaults.yml
+      skip: true
+  tags: ['always']
+
+- name: Importing initialization tasks
+  import_tasks: init.yml
+  tags: ['always']
+
+- name: Importing install tasks
+  import_tasks: install.yml
+  tags: ['openvpn-server', 'openvpn-server-install']
+
+- name: Optionally importing monitoring tasks
+  include_tasks: 'monitoring-{{ openvpn_server__monitoring }}.yml'
+  when: openvpn_server__monitoring is defined
+  tags: ['openvpn-server', 'openvpn-server-monitoring']
+
+- name: Optionally importing facts tasks
+  include_tasks: facts.yml
+  when: openvpn_server__facts|bool
+  tags: ['openvpn-server', 'openvpn-server-facts']
