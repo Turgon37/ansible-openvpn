@@ -8,11 +8,11 @@
       - openvpn__instance.mode in ['client', 'server']
       - openvpn__instance.proto in ['tcp', 'udp']
       - openvpn__instance.port is defined
-      - openvpn__instance.dev is defined 
+      - openvpn__instance.dev is defined
         and (
           'tun' in openvpn__instance.dev
           or 'tap' in openvpn__instance.dev
-          or ( 
+          or (
             openvpn__instance.dev_type is defined
             and openvpn__instance.dev_type in ['tun', 'tap']
           )
@@ -43,6 +43,7 @@
     _openvpn__instance_tls_server_cert_path: '{{ _openvpn__instance_conf_directory }}/server_certificate.pem'
     _openvpn__instance_tls_server_key_path: '{{ _openvpn__instance_conf_directory }}/server_key.pem'
     _openvpn__instance_tls_dh_path: '{{ _openvpn__instance_conf_directory }}/dh.pem'
+    _openvpn__instance_tls_auth_path: '{{ _openvpn__instance_conf_directory }}/ta.key'
   tags: ['always']
 
 - name: Create instance directories
@@ -55,6 +56,7 @@
   with_items:
     - '{{ _openvpn__instance_conf_directory }}'
     - '{{ _openvpn__instance_var_directory }}'
+  when: openvpn__instance.state|d('present') == 'present'
   tags: ['openvpn', 'openvpn-configure']
 
 # TLS
@@ -74,7 +76,23 @@
     - config: '{{ openvpn__instance.key }}'
       path: '{{ _openvpn__instance_tls_server_key_path }}'
       mode: '0600'
-  when: item.config.content is defined
+  when: openvpn__instance.state|d('present') == 'present' and
+    item.config.content is defined
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Remove content of TLS files
+  file:
+    path: '{{ item.path }}'
+    state: absent
+  with_items:
+    - config: '{{ openvpn__instance.ca }}'
+      path: '{{ _openvpn__instance_tls_ca_cert_path }}'
+    - config: '{{ openvpn__instance.cert }}'
+      path: '{{ _openvpn__instance_tls_server_cert_path }}'
+    - config: '{{ openvpn__instance.key }}'
+      path: '{{ _openvpn__instance_tls_server_key_path }}'
+  when: openvpn__instance.state|d('present') != 'present' and
+    item.config.content is defined
   tags: ['openvpn', 'openvpn-configure']
 
 - name: Check presence of DH parameters
@@ -103,18 +121,18 @@
     state: absent
   when: _openvpn__tls_dh_stat.stat is defined
     and _openvpn__tls_dh_stat.stat.exists
-    and _openvpn__tls_dh_size.stdout|int !=
-      openvpn__instance_diffie_hellman_size
+    and _openvpn__tls_dh_size.stdout|int != openvpn__instance.dh
   tags: ['openvpn', 'openvpn-configure']
 
 - name: Generate DH parameters if needed
   command: >
     openssl dhparam
     -out {{ _openvpn__instance_tls_dh_path }}
-    {{ openvpn__instance_diffie_hellman_size|int }}
+    {{ openvpn__instance.dh|int }}
   args:
     creates: '{{ _openvpn__instance_tls_dh_path }}'
-  when: openvpn__instance_diffie_hellman_size != 'none'
+  when: openvpn__instance.state|d('present') == 'present'
+    and openvpn__instance.dh != 'none'
   register: _openvpn__tls_dh_generate
   tags: ['openvpn', 'openvpn-configure']
 
@@ -125,6 +143,33 @@
     group: '{{ openvpn__service_group }}'
     mode: 0640
   when: _openvpn__tls_dh_generate is not skipped
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Check presence of secret key
+  stat:
+    path: '{{ _openvpn__instance_tls_auth_path }}'
+  register: _openvpn__tls_auth_stat
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Generate secret key if needed
+  command: >
+    openvpn --genkey --secret
+    {{ _openvpn__instance_tls_auth_path }}
+  args:
+    creates: '{{ _openvpn__instance_tls_auth_path }}'
+  when: openvpn__instance.state|d('present') == 'present'
+    and openvpn__instance.tls_auth is not string
+    and openvpn__instance.tls_auth|bool
+  register: _openvpn__tls_auth_generate
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Ensure restricted permissions on secret key
+  file:
+    path: '{{ _openvpn__instance_tls_auth_path }}'
+    owner: '{{ openvpn__service_user }}'
+    group: '{{ openvpn__service_group }}'
+    mode: 0640
+  when: _openvpn__tls_auth_generate is not skipped
   tags: ['openvpn', 'openvpn-configure']
 
 # service configuration
@@ -153,11 +198,13 @@
   when: openvpn__instance.state|d('present') != 'present'
   tags: ['openvpn', 'openvpn-configure']
 
+# service
+
 - name: Compute instance service status
   set_fact:
     _openvpn__instance_service_status: "{{
       (openvpn__service_user == 'root')|ternary('reloaded', 'restarted')
-      if _openvpn__instance_config_stat.stat.exists 
+      if _openvpn__instance_config_stat.stat.exists
         and (_openvpn__instance_config is changed or
             _openvpn__tls_dh_generate is changed
         )

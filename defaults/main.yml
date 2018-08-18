@@ -80,10 +80,6 @@ openvpn__service_pidfile: '/run/openvpn/%i.pid'
 # Dict of openvpn instances
 openvpn__instances: {}
 
-# File containing Diffie Hellman parameters in .pem format
-# Use 'none' to disable it
-openvpn__instance_diffie_hellman_size: 2048
-
 # Define default values for all instances
 openvpn__instance_defaults:
   # TUN/TAP virtual network device
@@ -106,7 +102,7 @@ openvpn__instance_defaults:
   # TCP/UDP port number or port name for both local and remote
   # port:
 
-## NETWORK
+  ## NETWORK
 
   # Ping remote over the TCP/UDP control channel
   # if no packets have been sent for at least n seconds
@@ -133,7 +129,7 @@ openvpn__instance_defaults:
   # The algorithm parameter may be "lzo", "lz4", or empty
   # compress:
 
-## TLS
+  ## TLS
   # Certificate authority (CA) file in .pem format
   # ca:
   #   content:
@@ -141,7 +137,7 @@ openvpn__instance_defaults:
 
   # Directory containing trusted certificates (CAs and CRLs)
   # see man page for more informations
-  #capath
+  # capath
 
   # Local peer's signed certificate in .pem format
   # cert:
@@ -153,6 +149,16 @@ openvpn__instance_defaults:
   #   content:
   #   path:
 
+  # File containing Diffie Hellman parameters in .pem format
+  # indicates here the target size of the data
+  # use 'none' to disable DH for this instance
+  dh: 2048
+
+  # Enable HMAC authentication on top of the TLS control channel
+  # set to true to auto generate a key in a defaut path
+  # set to the path of your key to use existing
+  tls_auth: true
+
   # Sets  the  minimum  TLS  version we will accept from the peer (default is "1.0")
   # tls_version_min: 1.2 or-highest
 
@@ -162,7 +168,7 @@ openvpn__instance_defaults:
   # A list of allowable TLS ciphers
   # tls_cipher: []
 
-## DATA CHANNEL SPECIFIC
+  ## DATA CHANNEL SPECIFIC
   # Don't re-read key files across SIGUSR1
   persist_key: true
 
@@ -172,7 +178,7 @@ openvpn__instance_defaults:
   # Encrypt data channel packets with cipher algorithm alg
   cipher: AES-256-CBC
 
-## SERVER SPECIFIC
+  ## SERVER SPECIFIC
   # Push a config  file option back to the client for remote execution
   push: []
 
@@ -186,7 +192,7 @@ openvpn__instance_defaults:
   # max_clients: 100
 
 
-## GENERIC
+  ## GENERIC
   # Set output verbosity
   # 0 -- No output except fatal errors
   # 1 to 4 -- Normal usage range.
@@ -203,7 +209,7 @@ openvpn__instance_defaults:
   # 3 -- Allow passwords to be passed to scripts via environmental variables (potentially unsafe).
   script_security: 1
 
-## HOOKS
+  ## HOOKS
   # Run command cmd when our remote ip-address
   # is initially authenticated or changes.
   # Don't use --ipchange in --mode server mode

@@ -16,7 +16,7 @@ push "{{ opt }}"
 {%     endfor %}
 {%   endif %}
 
-dh {{ _openvpn__instance_tls_dh_path if openvpn__instance_diffie_hellman_size != 'none' else 'none' }}
+dh {{ _openvpn__instance_tls_dh_path if openvpn__instance.dh != 'none' else 'none' }}
 
 {%   if _instance.client_to_client|bool %}
 client-to-client

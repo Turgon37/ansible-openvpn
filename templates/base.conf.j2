@@ -47,6 +47,9 @@ capath {{ _instance.capath }}
 {% endif %}
 cert {{ _instance.cert.path|d(_openvpn__instance_tls_server_cert_path) }}
 key {{ _instance.key.path|d(_openvpn__instance_tls_server_key_path) }}
+{% if _instance.tls_auth is defined and _instance.tls_auth != false %}
+tls-auth {{ _instance.tls_auth if _instance.tls_auth is string else _openvpn__instance_tls_auth_path }} {{ 0 if _instance.mode == 'server' else 1 }}
+{% endif %}
 {% if _instance.tls_version_min is defined %}
 tls-version-min {{ _instance.tls_version_min }}
 {% endif %}
