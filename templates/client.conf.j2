@@ -1,0 +1,33 @@
+
+
+tls-client
+
+
+remote 192.168.57.213 1195 udp
+comp-lzo yes 
+--nobind
+--dev tun 
+--cipher AES-256-CBC 
+--auth SHA512 
+--auth-nocache 
+--reneg-sec 0 
+--verb 1
+--syslog nm-openvpn 
+--script-security 2
+--up /usr/lib/nm-openvpn-service-openvpn-helper --debug 0 3383 --bus-name org.freedesktop.NetworkManager.openvpn.Connection_3 
+--tun --
+--up-restart 
+--persist-key 
+--persist-tun 
+--management /var/run/NetworkManager/nm-openvpn-b033b637-1e0e-494d-9002-d2a8ffc78d13 unix 
+--management-client-user root 
+--management-client-group root 
+--management-query-passwords 
+--auth-retry interact 
+--route-noexec 
+--ifconfig-noexec 
+--client 
+--ca /home/pgindraud/.openvpn/nancy.pierregindraud.fr/ca.crt 
+--cert /home/pgindraud/.openvpn/nancy.pierregindraud.fr/pgindraud.crt 
+--key /home/pgindraud/.openvpn/nancy.pierregindraud.fr/pgindraud.key
+--user nm-openvpn --group nm-openvpn

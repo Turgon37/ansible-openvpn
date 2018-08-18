@@ -1,0 +1,31 @@
+{% extends "base.conf.j2" %}
+{% block mode %}
+mode server
+tls-server
+
+{%   if _instance.server is defined %}
+server {{ _instance.server }}
+{%   endif %}
+{%   if _instance.ifconfig_pool is defined %}
+ifconfig-pool {{ _instance.ifconfig_pool }}
+{%   endif %}
+
+{%   if _instance.push|length %}
+{%     for opt in _instance.push %}
+push "{{ opt }}"
+{%     endfor %}
+{%   endif %}
+
+dh {{ _openvpn__instance_tls_dh_path if openvpn__instance_diffie_hellman_size != 'none' else 'none' }}
+
+{%   if _instance.client_to_client|bool %}
+client-to-client
+{%   endif %}
+{%   if _instance.duplicate_cn|bool %}
+duplicate-cn
+{%   endif %}
+
+{%   if _instance.max_clients is defined %}
+max-clients {{ _instance.max_clients|int }}
+{%   endif %}
+{% endblock %}

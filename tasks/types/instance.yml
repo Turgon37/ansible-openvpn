@@ -1,0 +1,172 @@
+---
+
+- name: Check instance prerequisites
+  assert:
+    that:
+      - openvpn__instance is defined
+      - openvpn__instance.name is defined
+      - openvpn__instance.mode in ['client', 'server']
+      - openvpn__instance.proto in ['tcp', 'udp']
+      - openvpn__instance.port is defined
+      - openvpn__instance.dev is defined 
+        and (
+          'tun' in openvpn__instance.dev
+          or 'tap' in openvpn__instance.dev
+          or ( 
+            openvpn__instance.dev_type is defined
+            and openvpn__instance.dev_type in ['tun', 'tap']
+          )
+        )
+      - openvpn__instance.ipchange is not defined or openvpn__instance.mode in ['client']
+      - openvpn__instance.compress is not defined or openvpn__instance.compress in ['lzo', 'lz4', '']
+      - (openvpn__instance.keepalive is defined)|int + (openvpn__instance.ping is defined)|int <= 1
+      - openvpn__instance.ca is defined
+      - (openvpn__instance.ca.content is defined)|int + (openvpn__instance.ca.path is defined)|int == 1
+      - openvpn__instance.cert is defined
+      - (openvpn__instance.cert.content is defined)|int + (openvpn__instance.cert.path is defined)|int == 1
+      - openvpn__instance.key is defined
+      - (openvpn__instance.key.content is defined)|int + (openvpn__instance.key.path is defined)|int == 1
+    msg: >
+      openvpn__instance must be defined with specifications,
+      openvpn__instance.name must contains the name of the instance,
+  tags: ['always']
+
+- name: Init some values
+  set_fact:
+    _openvpn__instance_conf_directory: '{{ openvpn__configuration_directory }}/{{ openvpn__instance.name }}'
+    _openvpn__instance_var_directory: '{{ openvpn__var_directory }}/{{ openvpn__instance.name }}'
+  tags: ['always']
+
+- name: Compute paths
+  set_fact:
+    _openvpn__instance_tls_ca_cert_path: '{{ _openvpn__instance_conf_directory }}/certificate_autority.pem'
+    _openvpn__instance_tls_server_cert_path: '{{ _openvpn__instance_conf_directory }}/server_certificate.pem'
+    _openvpn__instance_tls_server_key_path: '{{ _openvpn__instance_conf_directory }}/server_key.pem'
+    _openvpn__instance_tls_dh_path: '{{ _openvpn__instance_conf_directory }}/dh.pem'
+  tags: ['always']
+
+- name: Create instance directories
+  file:
+    path: '{{ item }}'
+    owner: '{{ openvpn__service_user }}'
+    group: '{{ openvpn__service_group }}'
+    mode: 0750
+    state: directory
+  with_items:
+    - '{{ _openvpn__instance_conf_directory }}'
+    - '{{ _openvpn__instance_var_directory }}'
+  tags: ['openvpn', 'openvpn-configure']
+
+# TLS
+
+- name: Copy content of TLS files
+  copy:
+    dest: '{{ item.path }}'
+    owner: '{{ openvpn__service_user }}'
+    group: '{{ openvpn__service_group }}'
+    mode: "{{ item.mode|d('0640') }}"
+    content: '{{ item.config.content }}'
+  with_items:
+    - config: '{{ openvpn__instance.ca }}'
+      path: '{{ _openvpn__instance_tls_ca_cert_path }}'
+    - config: '{{ openvpn__instance.cert }}'
+      path: '{{ _openvpn__instance_tls_server_cert_path }}'
+    - config: '{{ openvpn__instance.key }}'
+      path: '{{ _openvpn__instance_tls_server_key_path }}'
+      mode: '0600'
+  when: item.config.content is defined
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Check presence of DH parameters
+  stat:
+    path: '{{ _openvpn__instance_tls_dh_path }}'
+  register: _openvpn__tls_dh_stat
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Check size of current DH parameters
+  shell: >
+    openssl dhparam
+    -in {{ _openvpn__instance_tls_dh_path }}
+    -text -noout 2>&1
+    | grep Parameters
+    | sed 's/.*Parameters:\s*(\([0-9]\+\).*/\1/'
+  when: _openvpn__tls_dh_stat.stat is defined
+    and _openvpn__tls_dh_stat.stat.exists
+  changed_when: false
+  check_mode: false
+  register: _openvpn__tls_dh_size
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Remove bad sized DH parameters
+  file:
+    path: '{{ _openvpn__instance_tls_dh_path }}'
+    state: absent
+  when: _openvpn__tls_dh_stat.stat is defined
+    and _openvpn__tls_dh_stat.stat.exists
+    and _openvpn__tls_dh_size.stdout|int !=
+      openvpn__instance_diffie_hellman_size
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Generate DH parameters if needed
+  command: >
+    openssl dhparam
+    -out {{ _openvpn__instance_tls_dh_path }}
+    {{ openvpn__instance_diffie_hellman_size|int }}
+  args:
+    creates: '{{ _openvpn__instance_tls_dh_path }}'
+  when: openvpn__instance_diffie_hellman_size != 'none'
+  register: _openvpn__tls_dh_generate
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Ensure restricted permissions on DH parameters
+  file:
+    path: '{{ _openvpn__instance_tls_dh_path }}'
+    owner: '{{ openvpn__service_user }}'
+    group: '{{ openvpn__service_group }}'
+    mode: 0640
+  when: _openvpn__tls_dh_generate is not skipped
+  tags: ['openvpn', 'openvpn-configure']
+
+# service configuration
+
+- name: Test if configuration file exists
+  stat:
+    path: "{{ openvpn__configuration_file|replace('%i', openvpn__instance.name) }}"
+  register: _openvpn__instance_config_stat
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Install openvpn instance configuration file
+  template:
+    src: '{{ openvpn__instance.mode }}.conf.j2'
+    dest: "{{ openvpn__configuration_file|replace('%i', openvpn__instance.name) }}"
+    owner: root
+    group: root
+    mode: 0640
+  when: openvpn__instance.state|d('present') == 'present'
+  register: _openvpn__instance_config
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Remove openvpn instance configuration file
+  file:
+    path: "{{ openvpn__configuration_file|replace('%i', openvpn__instance.name) }}"
+    state: absent
+  when: openvpn__instance.state|d('present') != 'present'
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Compute instance service status
+  set_fact:
+    _openvpn__instance_service_status: "{{
+      (openvpn__service_user == 'root')|ternary('reloaded', 'restarted')
+      if _openvpn__instance_config_stat.stat.exists 
+        and (_openvpn__instance_config is changed or
+            _openvpn__tls_dh_generate is changed
+        )
+      else 'started' }}"
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Ensure openvpn is started and enabled on boot
+  service:
+    name: "{{ openvpn__service_name|replace('%i', openvpn__instance.name) }}"
+    enabled: "{{ openvpn__service_enabled|bool if openvpn__instance.state|d('present') == 'present' else false }}"
+    state: "{{ (openvpn__service_enabled|bool if openvpn__instance.state|d('present') == 'present' else false)|ternary(_openvpn__instance_service_status, 'stopped') }}"
+  tags: ['openvpn', 'openvpn-configure', 'openvpn-service']

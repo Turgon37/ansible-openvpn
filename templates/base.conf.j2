@@ -1,0 +1,72 @@
+{{ ansible_managed|comment(decoration='# ') }}
+{% set _instance = openvpn__instance %}
+
+
+# MODE
+{% block mode %}{% endblock %}
+
+
+# NETWORK
+dev {{ _instance.dev }}
+{% if _instance.dev_type is defined %}
+dev-type {{ _instance.dev_type }}
+{% endif %}
+{% if _instance.persist_tun|bool %}
+persist-tun
+{% endif %}
+
+local {{ _instance.local }}
+port {{ _instance.port }}
+proto {{ _instance.proto~'-'~_instance.mode if _instance.proto == 'tcp' else _instance.proto }}
+
+{% if _instance.ping is defined %}
+ping {{ _instance.ping|int }}
+{%   if _instance.ping_exit is defined %}
+ping-exit
+{%   endif %}
+{% elif _instance.keepalive is defined %}
+keepalive {{ _instance.keepalive }}
+{% endif %}
+
+{% if _instance.topology is defined %}
+topology {{ _instance.topology }}
+{% endif %}
+{% if _instance.ifconfig is defined %}
+ifconfig {{ _instance.ifconfig }}
+{% endif %}
+
+{% if _instance.compress is defined %}
+compress {{ _instance.compress }}
+{% endif %}
+
+
+# TLS
+ca {{ _instance.ca.path|d(_openvpn__instance_tls_ca_cert_path) }}
+{% if _instance.capath is defined %}
+capath {{ _instance.capath }}
+{% endif %}
+cert {{ _instance.cert.path|d(_openvpn__instance_tls_server_cert_path) }}
+key {{ _instance.key.path|d(_openvpn__instance_tls_server_key_path) }}
+{% if _instance.tls_version_min is defined %}
+tls-version-min {{ _instance.tls_version_min }}
+{% endif %}
+{% if _instance.tls_version_max is defined %}
+tls-version-max {{ _instance.tls_version_max }}
+{% endif %}
+{% if _instance.tls_cipher is defined %}
+tls-cipher {{ _instance.tls_cipher if _instance.tls_cipher is string else _instance.tls_cipher|join(':') }}
+{% endif %}
+
+
+# DATA CHANNEL
+{% if _instance.persist_key|bool %}
+persist-key
+{% endif %}
+auth {{ _instance.auth }}
+cipher {{ _instance.cipher }}
+
+
+# GENERAL
+script-security {{ _instance.script_security|int }}
+verb {{ _instance.verb|int }}
+mute {{ _instance.mute|int }}

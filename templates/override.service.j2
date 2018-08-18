@@ -1,0 +1,9 @@
+{{ ansible_managed|comment(decoration='# ') }}
+
+[Unit]
+After=network.target
+
+[Service]
+Type=notify
+ExecStart=
+ExecStart={{ openvpn__service_executable }} --daemon ovpn-%i --status /run/openvpn/%i.status 10 --cd {{ openvpn__configuration_directory }} --config {{ openvpn__configuration_file }} --writepid {{ openvpn__service_pidfile }} --user {{ openvpn__service_user }} --group {{ openvpn__service_group }}

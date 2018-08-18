@@ -1,0 +1,16 @@
+---
+
+- name: Configure zabbix userparameters
+  include_role:
+    name: zabbix-agent
+    tasks_from: types/user_parameter
+  vars:
+    zabbix_agent__userparameter:
+      name: openvpn
+      userparameters:
+        - key: openvpn.discovery
+          comment: return zabbix discovery item for openvpn instances
+          command: >
+            /usr/bin/env python -c 'import json, sys; json.dump({"data": list(map(lambda x: {"{"+"#OPENVPN_INSTANCE}": x}, {{ openvpn__instances.keys()|list|to_json}} ))}, sys.stdout)'
+      state: present
+  tags: ['openvpn', 'openvpn-monitoring']

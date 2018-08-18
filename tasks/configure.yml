@@ -25,3 +25,13 @@
     createhome: false
     home: '{{ openvpn__configuration_directory }}'
     state: present
+
+- name: Ensure variable directories exists
+  file:
+    path: '{{ item }}'
+    owner: '{{ openvpn__service_user }}'
+    group: '{{ openvpn__service_group }}'
+    mode: 0750
+    state: directory
+  with_items:
+    - '{{ openvpn__var_directory }}'

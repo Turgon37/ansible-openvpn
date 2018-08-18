@@ -59,8 +59,14 @@ openvpn__service_enabled: true
 # optional path to old sysv init script to remove
 # openvpn__service_sysvinit_file:
 
-# The main configuration directory of openvpn_server
+# The main configuration directory of openvpn
 openvpn__configuration_directory: /etc/openvpn
+
+# The template for instance configuration files
+openvpn__configuration_file: '{{ openvpn__configuration_directory }}/%i.conf'
+
+# Directory which contains variables data
+openvpn__var_directory: /var/lib/openvpn
 
 # Path to openvpn_server binary
 openvpn__service_executable: /usr/sbin/openvpn
@@ -74,5 +80,131 @@ openvpn__service_pidfile: '/run/openvpn/%i.pid'
 # Dict of openvpn instances
 openvpn__instances: {}
 
+# File containing Diffie Hellman parameters in .pem format
+# Use 'none' to disable it
+openvpn__instance_diffie_hellman_size: 2048
+
 # Define default values for all instances
-openvpn__instance_defaults: {}
+openvpn__instance_defaults:
+  # TUN/TAP virtual network device
+  # dev:
+
+  # Which device type are we using
+  # 'tun', 'tap'
+  # dev_type:
+
+  # Don't close and reopen TUN/TAP device or run up/down
+  persist_tun: true
+
+  # Use protocol for communicating with remote host
+  # udp, tcp
+  proto: udp
+
+  # Local host name or IP address for bind
+  local: 0.0.0.0
+
+  # TCP/UDP port number or port name for both local and remote
+  # port:
+
+## NETWORK
+
+  # Ping remote over the TCP/UDP control channel
+  # if no packets have been sent for at least n seconds
+  # ping:
+
+  # Causes  OpenVPN  to  exit  after  n  seconds  pass  without  reception of a ping
+  # ping_exit:
+
+  #
+  # keepalive interval timeout
+
+  # Set TUN/TAP adapter parameters
+  # ifconfig:
+  #    local: 1.1.1.1
+  #    remote: 255.255.255.0
+
+  # Set  aside  a pool of subnets to be dynamically allocated to connecting clients
+  # ifconfig_pool:
+  #    start: 1.1.1.2
+  #    end: 1.1.1.20
+  #    netmask: 255.255.255.0
+
+  # Enable a compression algorithm.
+  # The algorithm parameter may be "lzo", "lz4", or empty
+  # compress:
+
+## TLS
+  # Certificate authority (CA) file in .pem format
+  # ca:
+  #   content:
+  #   path:
+
+  # Directory containing trusted certificates (CAs and CRLs)
+  # see man page for more informations
+  #capath
+
+  # Local peer's signed certificate in .pem format
+  # cert:
+  #   content:
+  #   path:
+
+  # Local peer's private key in .pem format.
+  # key:
+  #   content:
+  #   path:
+
+  # Sets  the  minimum  TLS  version we will accept from the peer (default is "1.0")
+  # tls_version_min: 1.2 or-highest
+
+  # Set the maximum TLS version we will use
+  # tls_version_min: 1.2 or-highest
+
+  # A list of allowable TLS ciphers
+  # tls_cipher: []
+
+## DATA CHANNEL SPECIFIC
+  # Don't re-read key files across SIGUSR1
+  persist_key: true
+
+  # Authenticate data channel packets with HMAC using message digest algorithm alg.
+  auth: SHA256
+
+  # Encrypt data channel packets with cipher algorithm alg
+  cipher: AES-256-CBC
+
+## SERVER SPECIFIC
+  # Push a config  file option back to the client for remote execution
+  push: []
+
+  # If true, each client will "see" the other clients which are currently connected
+  client_to_client: false
+
+  # Allow multiple clients with the same common name to concurrently connect.
+  duplicate_cn: false
+
+  # Limit server to a maximum of n concurrent clients.
+  # max_clients: 100
+
+
+## GENERIC
+  # Set output verbosity
+  # 0 -- No output except fatal errors
+  # 1 to 4 -- Normal usage range.
+  # 5 -- Output R and W characters to the console for each packet read and write
+  # 6 to 11 -- Debug info range
+  verb: 1
+  # Log at most n consecutive messages in the same category
+  mute: 20
+
+  # This  directive  offers  policy-level control over OpenVPN's usage of external programs and scripts
+  # 0 -- Strictly no calling of external programs.
+  # 1 -- (Default) Only call built-in executables such as ifconfig, ip, route, or netsh.
+  # 2 -- Allow calling of built-in executables and user-defined scripts.
+  # 3 -- Allow passwords to be passed to scripts via environmental variables (potentially unsafe).
+  script_security: 1
+
+## HOOKS
+  # Run command cmd when our remote ip-address
+  # is initially authenticated or changes.
+  # Don't use --ipchange in --mode server mode
+  # ipchange:

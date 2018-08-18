@@ -35,7 +35,7 @@
   tags: ['openvpn', 'openvpn-service']
 
 - name: Configuring instances
-  include_tasks: instance.yml
+  include_tasks: types/instance.yml
   vars:
     openvpn__instance:
       "{{ openvpn__instance_defaults
@@ -47,7 +47,7 @@
   tags: ['openvpn', 'openvpn-configure']
 
 - name: Optionally importing monitoring tasks
-  include_tasks: 'monitoring-{{ openvpn__monitoring }}.yml'
+  include_tasks: 'monitoring/{{ openvpn__monitoring }}.yml'
   when: openvpn__monitoring is defined
   tags: ['openvpn', 'openvpn-monitoring']
 

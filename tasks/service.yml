@@ -7,7 +7,7 @@
 
 - name: Install systemd overriding unit file
   template:
-    src: openvpn.override.service.j2
+    src: override.service.j2
     dest: "/etc/systemd/system/{{ openvpn__service_name|replace('%i', '') }}.service.d/override.conf"
     owner: root
     group: root
