@@ -44,6 +44,7 @@
     _openvpn__instance_tls_server_key_path: '{{ _openvpn__instance_conf_directory }}/server_key.pem'
     _openvpn__instance_tls_dh_path: '{{ _openvpn__instance_conf_directory }}/dh.pem'
     _openvpn__instance_tls_auth_path: '{{ _openvpn__instance_conf_directory }}/ta.key'
+    _openvpn__instance_pool_persist_file_path: '{{ _openvpn__instance_var_directory }}/ipp.txt'
   tags: ['always']
 
 - name: Create instance directories

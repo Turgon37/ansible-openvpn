@@ -115,15 +115,17 @@ openvpn__instance_defaults:
   # keepalive interval timeout
 
   # Set TUN/TAP adapter parameters
-  # ifconfig:
-  #    local: 1.1.1.1
-  #    remote: 255.255.255.0
+  # ifconfig: 1.1.1.1 255.255.255.0
 
   # Set  aside  a pool of subnets to be dynamically allocated to connecting clients
-  # ifconfig_pool:
-  #    start: 1.1.1.2
-  #    end: 1.1.1.20
-  #    netmask: 255.255.255.0
+  # ifconfig_pool: 1.1.1.2 1.1.1.20 255.255.255.0
+
+  # Persist/unpersist ifconfig-pool data to file
+  # set to true to use auto config
+  # set to a path to register it in another place
+  ifconfig_pool_persist: true
+  # Define persist pool storage file flush delay in seconds
+  ifconfig_pool_persist_seconds: 600
 
   # Enable a compression algorithm.
   # The algorithm parameter may be "lzo", "lz4", or empty

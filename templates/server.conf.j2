@@ -9,6 +9,9 @@ server {{ _instance.server }}
 {%   if _instance.ifconfig_pool is defined %}
 ifconfig-pool {{ _instance.ifconfig_pool }}
 {%   endif %}
+{%   if _instance.ifconfig_pool_persist is defined and _instance.ifconfig_pool_persist != false %}
+ifconfig-pool-persist {{ _instance.ifconfig_pool_persist if _instance.ifconfig_pool_persist is string else _openvpn__instance_pool_persist_file_path }} {{ _instance.ifconfig_pool_persist_seconds|int }}
+{%   endif %}
 
 {%   if _instance.push|length %}
 {%     for opt in _instance.push %}

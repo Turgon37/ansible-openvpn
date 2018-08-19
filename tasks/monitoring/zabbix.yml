@@ -12,5 +12,10 @@
           comment: return zabbix discovery item for openvpn instances
           command: >
             /usr/bin/env python -c 'import json, sys; json.dump({"data": list(map(lambda x: {"{"+"#OPENVPN_INSTANCE}": x}, {{ openvpn__instances.keys()|list|to_json}} ))}, sys.stdout)'
+        - key: openvpn.configuration_value[*]
+          command: "/usr/bin/env cat {{ openvpn__configuration_file|replace('%i', '$1') }} | grep '^$2' | cut -d ' ' -f 2-$3"
+          sudo: true
+          sudo_user: root
+          sudo_command: /usr/bin/env cat /etc/openvpn/[a-zA-Z-]*.conf
       state: present
   tags: ['openvpn', 'openvpn-monitoring']
