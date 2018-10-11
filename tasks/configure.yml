@@ -29,9 +29,9 @@
 - name: Ensure variable directories exists
   file:
     path: '{{ item }}'
-    owner: '{{ openvpn__service_user }}'
+    owner: root
     group: '{{ openvpn__service_group }}'
-    mode: 0750
+    mode: 0770
     state: directory
   with_items:
     - '{{ openvpn__var_directory }}'

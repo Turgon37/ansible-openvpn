@@ -2,33 +2,34 @@
 {% block mode %}
 mode server
 tls-server
+local {{ _opts.local }}
 
-{%   if _instance.server is defined %}
-server {{ _instance.server }}
+{%   if _opts.server is defined %}
+server {{ _opts.server }}
 {%   endif %}
-{%   if _instance.ifconfig_pool is defined %}
-ifconfig-pool {{ _instance.ifconfig_pool }}
+{%   if _opts.ifconfig_pool is defined %}
+ifconfig-pool {{ _opts.ifconfig_pool }}
 {%   endif %}
-{%   if _instance.ifconfig_pool_persist is defined and _instance.ifconfig_pool_persist != false %}
-ifconfig-pool-persist {{ _instance.ifconfig_pool_persist if _instance.ifconfig_pool_persist is string else _openvpn__instance_pool_persist_file_path }} {{ _instance.ifconfig_pool_persist_seconds|int }}
+{%   if _opts.ifconfig_pool_persist is defined and _opts.ifconfig_pool_persist != false %}
+ifconfig-pool-persist {{ _opts.ifconfig_pool_persist if _opts.ifconfig_pool_persist is string else _openvpn__instance_pool_persist_file_path }} {{ _opts.ifconfig_pool_persist_seconds|int }}
 {%   endif %}
 
-{%   if _instance.push|length %}
-{%     for opt in _instance.push %}
+{%   if _opts.push|length %}
+{%     for opt in _opts.push %}
 push "{{ opt }}"
 {%     endfor %}
 {%   endif %}
 
-dh {{ _openvpn__instance_tls_dh_path if openvpn__instance.dh != 'none' else 'none' }}
+dh {{ _openvpn__instance_tls_dh_path if _opts.options.dh != 'none' else 'none' }}
 
-{%   if _instance.client_to_client|bool %}
+{%   if _opts.client_to_client|bool %}
 client-to-client
 {%   endif %}
-{%   if _instance.duplicate_cn|bool %}
+{%   if _opts.duplicate_cn|bool %}
 duplicate-cn
 {%   endif %}
 
-{%   if _instance.max_clients is defined %}
-max-clients {{ _instance.max_clients|int }}
+{%   if _opts.max_clients is defined %}
+max-clients {{ _opts.max_clients|int }}
 {%   endif %}
 {% endblock %}

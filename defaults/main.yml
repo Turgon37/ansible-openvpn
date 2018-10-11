@@ -46,7 +46,7 @@ openvpn__provider_repositories:
 
 ### SERVICE CONFIGURATION
 # ---------------------------------------
-# The user and group that exporter will run as
+# The user and group that openvpn will run as
 openvpn__service_user: openvpn
 openvpn__service_group: '{{ openvpn__service_user }}'
 
@@ -72,8 +72,10 @@ openvpn__var_directory: /var/lib/openvpn
 openvpn__service_executable: /usr/sbin/openvpn
 
 # Path to pid file per instances
-openvpn__service_pidfile: '/run/openvpn/%i.pid'
+openvpn__service_pidfile: '{{ openvpn__service_run_directory }}/%i.pid'
 
+# Runtime directory
+openvpn__service_run_directory: /run/openvpn
 
 ### OPENVPN CONFIGURATION
 # ---------------------------------------
@@ -99,6 +101,9 @@ openvpn__instance_defaults:
   # Local host name or IP address for bind
   local: 0.0.0.0
 
+  # Remote host name or IP address
+  remote: []
+
   # TCP/UDP port number or port name for both local and remote
   # port:
 
@@ -116,6 +121,9 @@ openvpn__instance_defaults:
 
   # Set TUN/TAP adapter parameters
   # ifconfig: 1.1.1.1 255.255.255.0
+
+  # Add route to routing table after connection is established.
+  route: []
 
   # Set  aside  a pool of subnets to be dynamically allocated to connecting clients
   # ifconfig_pool: 1.1.1.2 1.1.1.20 255.255.255.0

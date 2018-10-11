@@ -1,0 +1,4 @@
+---
+
+openvpn__packages_names:
+  - "openvpn{{ (openvpn__version != 'latest')|ternary('-'~openvpn__version, '') }}"

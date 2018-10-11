@@ -5,5 +5,6 @@ After=network.target
 
 [Service]
 Type=notify
+ExecStartPre=/usr/bin/env install --directory {{ openvpn__service_run_directory }} --owner root --group root --mode 755
 ExecStart=
-ExecStart={{ openvpn__service_executable }} --daemon ovpn-%i --status /run/openvpn/%i.status 10 --cd {{ openvpn__configuration_directory }} --config {{ openvpn__configuration_file }} --writepid {{ openvpn__service_pidfile }} --user {{ openvpn__service_user }} --group {{ openvpn__service_group }}
+ExecStart={{ openvpn__service_executable }} --daemon ovpn-%i --status {{ openvpn__service_run_directory }}/%i.status 10 --cd {{ openvpn__configuration_directory }} --config {{ openvpn__configuration_file }} --writepid {{ openvpn__service_pidfile }} --user {{ openvpn__service_user }} --group {{ openvpn__service_group }}

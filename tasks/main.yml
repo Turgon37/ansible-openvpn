@@ -37,10 +37,8 @@
 - name: Configuring instances
   include_tasks: types/instance.yml
   vars:
-    openvpn__instance:
-      "{{ openvpn__instance_defaults
-      |combine(outer_item.value)
-      |combine( {'name': outer_item.key} ) }}"
+    openvpn__instance: "{{ outer_item.value
+      |combine( {'name': outer_item.key, 'options': (openvpn__instance_defaults)|combine(outer_item.value.options) } ) }}"
   with_dict: '{{ openvpn__instances }}'
   loop_control:
     loop_var: outer_item

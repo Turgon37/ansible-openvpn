@@ -1,0 +1,10 @@
+{% extends "base.conf.j2" %}
+{% block mode %}
+{%   if _opts.remote|length %}
+{%     for rem in _opts.remote %}
+remote {{ rem }}
+{%     endfor %}
+{%   elif _opts.local is defined %}
+local {{ _opts.local }}
+{%   endif %}
+{% endblock %}

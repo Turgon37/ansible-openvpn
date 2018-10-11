@@ -17,6 +17,8 @@ Require Ansible >= 2.4
 
 ### Dependencies
 
+If you use the zabbix monitoring profile you will need the role [ansible-zabbix-agent](https://github.com/Turgon37/ansible-zabbix-agent)
+
 ## OS Family
 
 This role is available for Debian
@@ -26,11 +28,16 @@ This role is available for Debian
 At this day the role can be used to :
 
   * install openvpn
+  * instance(s) configuration with :
+      * optional diffie hellman parameter generation
+      * optional TLS secret generation
+  * monitoring items for
+    * Zabbix
   * [local facts](#facts)
 
 ## Configuration
 
-### Server
+### Role
 
 All variables which can be overridden are stored in [defaults/main.yml](defaults/main.yml) file as well as in table below. To see default values please refer to this file.
 

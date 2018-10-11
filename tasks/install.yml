@@ -22,6 +22,17 @@
   loop_control:
     loop_var: file_item
 
+- name: Include installation tasks from os repository
+  include_tasks: '{{ file_item }}'
+  with_first_found:
+    - files:
+        - 'install-os-{{ ansible_distribution }}.yml'
+        - 'install-os-{{ ansible_os_family }}.yml'
+      skip: true
+  when: openvpn__packages_source == 'os'
+  loop_control:
+    loop_var: file_item
+
 - name: Install openvpn packages
   package:
     name: '{{ item }}'
