@@ -1,0 +1,40 @@
+---
+
+- name: Install required packages
+  package:
+    name: '{{ item }}'
+    state: present
+  with_items: '{{ openvpn__required_packages_names }}'
+
+- name: Fail if architecture is not supported
+  fail:
+    msg: '{{ ansible_architecture }} architecture is not supported'
+  when: openvpn__packages_source == 'openvpn'
+    and ansible_architecture not in ['x86_64']
+
+- name: Include installation tasks from openvpn repository
+  include_tasks: '{{ file_item }}'
+  with_first_found:
+    - files:
+        - 'install-openvpn-{{ ansible_distribution }}.yml'
+        - 'install-openvpn-{{ ansible_os_family }}.yml'
+  when: openvpn__packages_source == 'openvpn'
+  loop_control:
+    loop_var: file_item
+
+- name: Include installation tasks from os repository
+  include_tasks: '{{ file_item }}'
+  with_first_found:
+    - files:
+        - 'install-os-{{ ansible_distribution }}.yml'
+        - 'install-os-{{ ansible_os_family }}.yml'
+      skip: true
+  when: openvpn__packages_source == 'os'
+  loop_control:
+    loop_var: file_item
+
+- name: Install openvpn packages
+  package:
+    name: '{{ item }}'
+    state: present
+  with_items: '{{ openvpn__packages_names }}'

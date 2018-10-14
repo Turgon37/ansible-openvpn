@@ -1,0 +1,21 @@
+---
+
+- name: Configure zabbix userparameters
+  include_role:
+    name: zabbix-agent
+    tasks_from: types/user_parameter
+  vars:
+    zabbix_agent__userparameter:
+      name: openvpn
+      userparameters:
+        - key: openvpn.discovery
+          comment: return zabbix discovery item for openvpn instances
+          command: >
+            /usr/bin/env python -c 'import json, sys; json.dump({"data": list(map(lambda x: {"{"+"#OPENVPN_INSTANCE}": x}, {% set _k = [] %}{% for n,v in openvpn__instances.items() if v['state']|d('present') == 'present' %}{% set _ = _k.append(n) %}{% endfor %}{{ _k|to_json }} ))}, sys.stdout)'
+        - key: openvpn.configuration_value[*]
+          command: "/usr/bin/env cat {{ openvpn__configuration_file|replace('%i', '$1') }} | awk 'BEGIN{ idx=$3 } /^$2/ { value=$idx } END{ if (value) { print value } else { print 0 } }'"
+          sudo: true
+          sudo_user: root
+          sudo_command: /usr/bin/env cat /etc/openvpn/[a-zA-Z-]*.conf
+      state: present
+  tags: ['openvpn', 'openvpn-monitoring']

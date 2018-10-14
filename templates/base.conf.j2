@@ -1,0 +1,99 @@
+{{ ansible_managed|comment(decoration='# ') }}
+{% set _opts = openvpn__instance.options %}
+{% set _scripts = openvpn__instance.scripts|d([]) %}
+
+
+# MODE
+{% block mode %}{% endblock %}
+
+
+# NETWORK
+dev {{ _opts.dev }}
+{% if _opts.dev_type is defined %}
+dev-type {{ _opts.dev_type }}
+{% endif %}
+{% if _opts.persist_tun|bool %}
+persist-tun
+{% endif %}
+
+port {{ _opts.port }}
+proto {{ _opts.proto~'-'~((_opts.mode == 'client' or _opts.mode == 'p2p' and _opts.remote|length)|ternary('client', 'server')) if _opts.proto == 'tcp' else _opts.proto }}
+
+{% if _opts.ping is defined %}
+ping {{ _opts.ping|int }}
+{%   if _opts.ping_exit is defined %}
+ping-exit
+{%   endif %}
+{% elif _opts.keepalive is defined %}
+keepalive {{ _opts.keepalive }}
+{% endif %}
+
+{% if _opts.topology is defined %}
+topology {{ _opts.topology }}
+{% endif %}
+{% if _opts.ifconfig is defined %}
+ifconfig {{ _opts.ifconfig }}
+{% endif %}
+{% if _opts.route|length %}
+{%   for route in _opts.route %}
+route {{ route }}
+{%   endfor %}
+{% endif %}
+
+{% if _opts.compress is defined %}
+compress {{ _opts.compress }}
+{% endif %}
+
+{% if _opts.secret is defined %}
+# STATIC KEY
+secret {{ _opts.secret.path|d(_openvpn__instance_static_key_path) }}
+
+{% else %}
+# TLS
+ca {{ _opts.ca.path|d(_openvpn__instance_tls_ca_cert_path) }}
+{%   if _opts.capath is defined %}
+capath {{ _opts.capath }}
+{%   endif %}
+cert {{ _opts.cert.path|d(_openvpn__instance_tls_server_cert_path) }}
+key {{ _opts.key.path|d(_openvpn__instance_tls_server_key_path) }}
+{%   if _opts.tls_auth is defined and _opts.tls_auth != false %}
+tls-auth {{ _opts.tls_auth if _opts.tls_auth is string else _openvpn__instance_tls_auth_path }} {{ 0 if _opts.mode == 'server' else 1 }}
+{%   endif %}
+{%   if _opts.tls_version_min is defined %}
+tls-version-min {{ _opts.tls_version_min }}
+{%   endif %}
+{%   if _opts.tls_version_max is defined %}
+tls-version-max {{ _opts.tls_version_max }}
+{%   endif %}
+{%   if _opts.tls_cipher is defined %}
+tls-cipher {{ _opts.tls_cipher if _opts.tls_cipher is string else _opts.tls_cipher|join(':') }}
+{%   endif %}
+{% endif %}
+
+
+# DATA CHANNEL
+{% if _opts.persist_key|bool %}
+persist-key
+{% endif %}
+auth {{ _opts.auth }}
+cipher {{ _opts.cipher }}
+
+
+# SCRIPTS
+script-security {{ _opts.script_security|d(_openvpn__instance_default_script_security)|int }}
+{% if _opts.up is defined %}
+up {{ _opts.up }}
+{% elif 'up' in _scripts|map(attribute='type')|unique %}
+up '{{ openvpn__run_parts_script_path }} {{ _openvpn__instance_scripts_directory_map['up'] }}'
+{% endif %}
+{% if _opts.down is defined %}
+down {{ _opts.down }}
+{% elif 'down' in _scripts|map(attribute='type')|unique %}
+down '{{ openvpn__run_parts_script_path }} {{ _openvpn__instance_scripts_directory_map['down'] }}'
+{% endif %}
+
+
+
+# GENERAL
+verb {{ _opts.verb|int }}
+mute {{ _opts.mute|int }}

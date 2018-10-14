@@ -1,0 +1,235 @@
+---
+# defaults file for ansible-openvpn
+
+# Enable facts deploiement
+openvpn__facts: true
+
+# Choose the monitoring backend to configure (if available)
+# openvpn__monitoring:
+
+
+### INSTALL CONFIGURATION
+# ---------------------------------------
+# The openvpn version to install (as the ones available in repositories)
+openvpn__version: latest
+
+# Choose the source of openvpn installation
+# in os, openvpn
+openvpn__packages_source: os
+
+# Optional pre-install required packages names
+openvpn__required_packages_names: []
+
+# see vars/
+# openvpn__packages_names:
+
+# Choose which branch to track version from
+# see https://community.openvpn.net/openvpn/wiki/OpenvpnSoftwareRepos
+# in 'stable', 'testing', 'release/2.3', 'release/2.4'
+openvpn__provider_version: stable
+
+# List of GPG keys per distributions
+openvpn__provider_gpg_keys:
+  Debian:
+    - id: 30EBF4E73CCE63EEE124DD278E6DA8B4E158C569
+      url: https://swupdate.openvpn.net/repos/repo-public.gpg
+
+# List of packages repositories per distributions
+openvpn__provider_repositories:
+  Debian:
+    - >-
+      deb
+      http://build.openvpn.net/debian/openvpn/{{ openvpn__provider_version }}
+      {{ ansible_distribution_release }}
+      main
+
+
+### SERVICE CONFIGURATION
+# ---------------------------------------
+# The user and group that openvpn will run as
+openvpn__service_user: openvpn
+openvpn__service_group: '{{ openvpn__service_user }}'
+
+# The name of the dhcp service
+openvpn__service_name: 'openvpn@%i'
+
+# Determine if the service will be enabled
+openvpn__service_enabled: true
+
+# optional path to old sysv init script to remove
+# openvpn__service_sysvinit_file:
+
+# The main configuration directory of openvpn
+openvpn__configuration_directory: /etc/openvpn
+
+# The template for instance configuration files
+openvpn__configuration_file: '{{ openvpn__configuration_directory }}/%i.conf'
+
+# Directory which contains variables data
+openvpn__var_directory: /var/lib/openvpn
+
+# Path to openvpn_server binary
+openvpn__service_executable: /usr/sbin/openvpn
+
+# Path to pid file per instances
+openvpn__service_pidfile: '{{ openvpn__service_run_directory }}/%i.pid'
+
+# Runtime directory
+openvpn__service_run_directory: /run/openvpn
+
+### OPENVPN CONFIGURATION
+# ---------------------------------------
+# Dict of openvpn instances
+openvpn__instances: {}
+
+# Path to the run-parts wrapper
+openvpn__run_parts_script_path: '{{ openvpn__configuration_directory}}/run-parts.sh'
+
+# Define default values for all instances
+openvpn__instance_defaults:
+  # TUN/TAP virtual network device
+  # dev:
+
+  # Which device type are we using
+  # 'tun', 'tap'
+  # dev_type:
+
+  # Don't close and reopen TUN/TAP device or run up/down
+  persist_tun: true
+
+  # Use protocol for communicating with remote host
+  # udp, tcp
+  proto: udp
+
+  # Local host name or IP address for bind
+  local: 0.0.0.0
+
+  # Remote host name or IP address
+  remote: []
+
+  # TCP/UDP port number or port name for both local and remote
+  # port:
+
+  ## NETWORK
+
+  # Ping remote over the TCP/UDP control channel
+  # if no packets have been sent for at least n seconds
+  # ping:
+
+  # Causes  OpenVPN  to  exit  after  n  seconds  pass  without  reception of a ping
+  # ping_exit:
+
+  #
+  # keepalive interval timeout
+
+  # Set TUN/TAP adapter parameters
+  # ifconfig: 1.1.1.1 255.255.255.0
+
+  # Add route to routing table after connection is established.
+  route: []
+
+  # Set  aside  a pool of subnets to be dynamically allocated to connecting clients
+  # ifconfig_pool: 1.1.1.2 1.1.1.20 255.255.255.0
+
+  # Persist/unpersist ifconfig-pool data to file
+  # set to true to use auto config
+  # set to a path to register it in another place
+  ifconfig_pool_persist: true
+  # Define persist pool storage file flush delay in seconds
+  ifconfig_pool_persist_seconds: 600
+
+  # Enable a compression algorithm.
+  # The algorithm parameter may be "lzo", "lz4", or empty
+  # compress:
+
+  ## TLS
+  # Certificate authority (CA) file in .pem format
+  # ca:
+  #   content:
+  #   path:
+
+  # Directory containing trusted certificates (CAs and CRLs)
+  # see man page for more informations
+  # capath
+
+  # Local peer's signed certificate in .pem format
+  # cert:
+  #   content:
+  #   path:
+
+  # Local peer's private key in .pem format.
+  # key:
+  #   content:
+  #   path:
+
+  # File containing Diffie Hellman parameters in .pem format
+  # indicates here the target size of the data
+  # use 'none' to disable DH for this instance
+  dh: 2048
+
+  # Enable HMAC authentication on top of the TLS control channel
+  # set to true to auto generate a key in a defaut path
+  # set to the path of your key to use existing
+  tls_auth: true
+
+  # Sets  the  minimum  TLS  version we will accept from the peer (default is "1.0")
+  # tls_version_min: 1.2 or-highest
+
+  # Set the maximum TLS version we will use
+  # tls_version_min: 1.2 or-highest
+
+  # A list of allowable TLS ciphers
+  # tls_cipher: []
+
+  ## DATA CHANNEL SPECIFIC
+  # Don't re-read key files across SIGUSR1
+  persist_key: true
+
+  # Authenticate data channel packets with HMAC using message digest algorithm alg.
+  auth: SHA256
+
+  # Encrypt data channel packets with cipher algorithm alg
+  cipher: AES-256-CBC
+
+  ## SERVER SPECIFIC
+  # Push a config  file option back to the client for remote execution
+  push: []
+
+  # If true, each client will "see" the other clients which are currently connected
+  client_to_client: false
+
+  # Allow multiple clients with the same common name to concurrently connect.
+  duplicate_cn: false
+
+  # Limit server to a maximum of n concurrent clients.
+  # max_clients: 100
+
+
+  ## GENERIC
+  # Set output verbosity
+  # 0 -- No output except fatal errors
+  # 1 to 4 -- Normal usage range.
+  # 5 -- Output R and W characters to the console for each packet read and write
+  # 6 to 11 -- Debug info range
+  verb: 1
+  # Log at most n consecutive messages in the same category
+  mute: 20
+
+  # This  directive  offers  policy-level control over OpenVPN's usage of external programs and scripts
+  # 0 -- Strictly no calling of external programs.
+  # 1 -- (Default) Only call built-in executables such as ifconfig, ip, route, or netsh.
+  # 2 -- Allow calling of built-in executables and user-defined scripts.
+  # 3 -- Allow passwords to be passed to scripts via environmental variables (potentially unsafe).
+  # script_security: 1
+
+  # Shell command to run after successful TUN/TAP device open
+  # up: /path/to/script
+
+  # Shell command to run after TUN/TAP device close
+  # down: /path/to/script
+
+  ## HOOKS
+  # Run command cmd when our remote ip-address
+  # is initially authenticated or changes.
+  # Don't use --ipchange in --mode server mode
+  # ipchange:

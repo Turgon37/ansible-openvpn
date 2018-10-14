@@ -1,0 +1,13 @@
+---
+
+openvpn__required_packages_names:
+  - ca-certificates
+  - curl
+  - gnupg2
+
+# The name of the openvpn packages
+openvpn__packages_names:
+  - "openvpn{{ (openvpn__version != 'latest')|ternary('='~openvpn__version, '') }}"
+
+# remove debian sysv init file
+openvpn__service_sysvinit_file: /etc/init.d/openvpn

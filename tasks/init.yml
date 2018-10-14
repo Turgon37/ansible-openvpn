@@ -1,0 +1,7 @@
+---
+
+- name: Assert required variables
+  assert:
+    that:
+      - openvpn__packages_source in ['os', 'openvpn']
+      - openvpn__provider_version in ['stable', 'testing', 'release/2.3', 'release/2.4']

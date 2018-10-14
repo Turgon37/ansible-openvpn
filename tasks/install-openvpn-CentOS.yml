@@ -1,0 +1,5 @@
+---
+
+- name: Fail if openvpn__packages_source is different than os
+  fail:
+    msg: On CentOS you must use the 'os' as openvpn__packages_source

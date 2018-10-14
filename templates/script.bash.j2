@@ -1,0 +1,11 @@
+#!/bin/bash
+
+{{ ansible_managed|comment(decoration='# ') }}
+
+# Doc
+#  For --dev tun execute as:
+#    $1=tun_dev $2=tun_mtu $3=link_mtu $4=ifconfig_local_ip $5=ifconfig_remote_ip $6=[init|restart]
+#  For --dev tap execute as:
+#    $1=tap_dev $2=tap_mtu $3=link_mtu $4=ifconfig_local_ip $5=ifconfig_netmask $6=[init|restart]
+
+{{ openvpn__instance_script.content }}
