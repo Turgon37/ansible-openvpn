@@ -220,10 +220,13 @@ openvpn__instance_defaults:
   # 1 -- (Default) Only call built-in executables such as ifconfig, ip, route, or netsh.
   # 2 -- Allow calling of built-in executables and user-defined scripts.
   # 3 -- Allow passwords to be passed to scripts via environmental variables (potentially unsafe).
-  #script_security: 1
+  # script_security: 1
 
-  #up:
-  #down:
+  # Shell command to run after successful TUN/TAP device open
+  # up: /path/to/script
+
+  # Shell command to run after TUN/TAP device close
+  # down: /path/to/script
 
   ## HOOKS
   # Run command cmd when our remote ip-address
