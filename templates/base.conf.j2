@@ -1,5 +1,6 @@
 {{ ansible_managed|comment(decoration='# ') }}
 {% set _opts = openvpn__instance.options %}
+{% set _scripts = openvpn__instance.scripts|d([]) %}
 
 
 # MODE
@@ -78,7 +79,21 @@ auth {{ _opts.auth }}
 cipher {{ _opts.cipher }}
 
 
+# SCRIPTS
+script-security {{ _opts.script_security|d(_openvpn__instance_default_script_security)|int }}
+{% if _opts.up is defined %}
+up {{ _opts.up }}
+{% elif 'up' in _scripts|map(attribute='type')|unique %}
+up '{{ openvpn__run_parts_script_path }} {{ _openvpn__instance_scripts_directory_map['up'] }}'
+{% endif %}
+{% if _opts.down is defined %}
+down {{ _opts.down }}
+{% elif 'down' in _scripts|map(attribute='type')|unique %}
+down '{{ openvpn__run_parts_script_path }} {{ _openvpn__instance_scripts_directory_map['down'] }}'
+{% endif %}
+
+
+
 # GENERAL
-script-security {{ _opts.script_security|int }}
 verb {{ _opts.verb|int }}
 mute {{ _opts.mute|int }}

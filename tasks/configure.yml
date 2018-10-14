@@ -35,3 +35,11 @@
     state: directory
   with_items:
     - '{{ openvpn__var_directory }}'
+
+- name: Install run-parts script
+  copy:
+    src: files/run-parts.sh
+    dest: '{{ openvpn__run_parts_script_path }}'
+    owner: '{{ openvpn__service_user }}'
+    group: '{{ openvpn__service_group }}'
+    mode: 0755

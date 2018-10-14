@@ -82,6 +82,9 @@ openvpn__service_run_directory: /run/openvpn
 # Dict of openvpn instances
 openvpn__instances: {}
 
+# Path to the run-parts wrapper
+openvpn__run_parts_script_path: '{{ openvpn__configuration_directory}}/run-parts.sh'
+
 # Define default values for all instances
 openvpn__instance_defaults:
   # TUN/TAP virtual network device
@@ -217,7 +220,10 @@ openvpn__instance_defaults:
   # 1 -- (Default) Only call built-in executables such as ifconfig, ip, route, or netsh.
   # 2 -- Allow calling of built-in executables and user-defined scripts.
   # 3 -- Allow passwords to be passed to scripts via environmental variables (potentially unsafe).
-  script_security: 1
+  #script_security: 1
+
+  #up:
+  #down:
 
   ## HOOKS
   # Run command cmd when our remote ip-address

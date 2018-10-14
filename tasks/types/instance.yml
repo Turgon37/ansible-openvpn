@@ -17,24 +17,45 @@
             and openvpn__instance.options.dev_type in ['tun', 'tap']
           )
         )
-      - openvpn__instance.options.ipchange is not defined or openvpn__instance.options.mode in ['client']
-      - openvpn__instance.options.compress is not defined or openvpn__instance.options.compress in ['lzo', 'lz4', '']
+      - openvpn__instance.options.ipchange is not defined
+          or openvpn__instance.options.mode in ['client']
+      - openvpn__instance.options.compress is not defined
+          or openvpn__instance.options.compress in ['lzo', 'lz4', '']
       - (openvpn__instance.options.keepalive is defined)|int + (openvpn__instance.options.ping is defined)|int <= 1
       - (openvpn__instance.options.secret is defined)|int +
         (openvpn__instance.options.ca is defined and openvpn__instance.options.cert is defined and openvpn__instance.options.key is defined)|int == 1
-      - openvpn__instance.options.secret is not defined or (openvpn__instance.options.secret.content is defined)|int + (openvpn__instance.options.secret.path is defined)|int == 1
-      - openvpn__instance.options.ca is not defined or (openvpn__instance.options.ca.content is defined)|int + (openvpn__instance.options.ca.path is defined)|int == 1
-      - openvpn__instance.options.cert is not defined or (openvpn__instance.options.cert.content is defined)|int + (openvpn__instance.options.cert.path is defined)|int == 1
-      - openvpn__instance.options.key is not defined or (openvpn__instance.options.key.content is defined)|int + (openvpn__instance.options.key.path is defined)|int == 1
+      - openvpn__instance.options.secret is not defined
+          or (openvpn__instance.options.secret.content is defined)|int
+           + (openvpn__instance.options.secret.path is defined)|int == 1
+      - openvpn__instance.options.ca is not defined
+          or (openvpn__instance.options.ca.content is defined)|int
+           + (openvpn__instance.options.ca.path is defined)|int == 1
+      - openvpn__instance.options.cert is not defined
+          or (openvpn__instance.options.cert.content is defined)|int
+           + (openvpn__instance.options.cert.path is defined)|int == 1
+      - openvpn__instance.options.key is not defined
+          or (openvpn__instance.options.key.content is defined)|int
+           + (openvpn__instance.options.key.path is defined)|int == 1
     msg: >
       openvpn__instance must be defined with specifications,
       openvpn__instance.name must contains the name of the instance,
   tags: ['always']
 
+- name: Check instance scripts prerequisites
+  assert:
+    that:
+      - item.type in ['up', 'down']
+      - item.format is not defined or item.format in ['bash']
+  with_items: '{{ openvpn__instance.scripts|list }}'
+  tags: ['always']
+
+# init
+
 - name: 'Init some values for {{ openvpn__instance.name }}'
   set_fact:
     _openvpn__instance_conf_directory: '{{ openvpn__configuration_directory }}/{{ openvpn__instance.name }}'
     _openvpn__instance_var_directory: '{{ openvpn__var_directory }}/{{ openvpn__instance.name }}'
+    _openvpn__instance_default_script_security: '{{ openvpn__instance.scripts|length|ternary(2, 1) }}'
   tags: ['always']
 
 - name: 'Compute paths for {{ openvpn__instance.name }}'
@@ -46,7 +67,12 @@
     _openvpn__instance_tls_dh_path: '{{ _openvpn__instance_conf_directory }}/dh.pem'
     _openvpn__instance_tls_auth_path: '{{ _openvpn__instance_conf_directory }}/ta.key'
     _openvpn__instance_pool_persist_file_path: '{{ _openvpn__instance_var_directory }}/ipp.txt'
+    _openvpn__instance_scripts_directory_map:
+      up: '{{ _openvpn__instance_conf_directory }}/up.d'
+      down: '{{ _openvpn__instance_conf_directory }}/down.d'
   tags: ['always']
+
+# directories
 
 - name: 'Ensure instance directories for {{ openvpn__instance.name }}'
   file:
@@ -59,6 +85,12 @@
     - path: '{{ _openvpn__instance_conf_directory }}'
     - path: '{{ _openvpn__instance_var_directory }}'
       mode: '0770'
+    - "{%- set _path = [] -%}
+      {%- for p in _openvpn__instance_scripts_directory_map.values() -%}
+      {%- set _ = _path.append({'path': p}) -%}
+      {%- endfor -%}
+      {{ _path }}"
+
   when: openvpn__instance.state|d('present') == 'present'
   tags: ['openvpn', 'openvpn-configure']
 
@@ -74,14 +106,16 @@
   when: openvpn__instance.state|d('present') == 'present'
     and openvpn__instance.options.secret is defined
     and openvpn__instance.options.secret.content is defined
+  tags: ['openvpn', 'openvpn-configure']
 
 - name: 'Remove content of static key for {{ openvpn__instance.name }}'
   file:
-    path: '{{ openvpn__instance.options.secret.path }}'
+    path: '{{ _openvpn__instance_static_key_path }}'
     state: absent
   when: openvpn__instance.options.secret is not defined
     or (openvpn__instance.state|d('present') != 'present'
       and openvpn__instance.options.secret.content is defined)
+  tags: ['openvpn', 'openvpn-configure']
 
 # TLS
 
@@ -202,6 +236,53 @@
   when: _openvpn__tls_auth_generate is not skipped
   tags: ['openvpn', 'openvpn-configure']
 
+# scripts
+
+- name: Install instance scripts
+  template:
+    src: "script.{{ item.format|d('blank') }}.j2"
+    dest: '{{ _openvpn__instance_scripts_directory_map[item.type] }}/{{ item.name }}'
+    owner: root
+    group: '{{ openvpn__service_group }}'
+    mode: 0750
+  with_items: '{{ openvpn__instance.scripts|d([])|list }}'
+  when: openvpn__instance.state|d('present') == 'present'
+  vars:
+    openvpn__instance_script: '{{ item }}'
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: List installed scripts
+  find:
+    paths: '{{ item.value }}'
+    file_type: file
+  with_dict: '{{ _openvpn__instance_scripts_directory_map }}'
+  register: _openvpn__instance_installed_scripts
+  tags: ['openvpn', 'openvpn-configure']
+
+- name: Remove unwanted scripts
+  file:
+    path: '{{ item.1.path }}'
+    state: absent
+  with_subelements:
+    - '{{ _openvpn__instance_installed_scripts.results|list }}'
+    - files
+  when: item.1.path|basename not in openvpn__instance.scripts|selectattr('type', 'equalto', item.0.item.key)|map(attribute='name')|list
+    or openvpn__instance.state|d('present') != 'present'
+  tags: ['openvpn', 'openvpn-configure']
+
+# directories
+
+- name: 'Remove instance folders for {{ openvpn__instance.name }}'
+  file:
+    path: '{{ item }}'
+    state: absent
+  with_items:
+    - '{{ _openvpn__instance_conf_directory }}'
+    - '{{ _openvpn__instance_var_directory }}'
+    - '{{ _openvpn__instance_scripts_directory_map.values()|list }}'
+  when: openvpn__instance.state|d('present') != 'present'
+  tags: ['openvpn', 'openvpn-configure']
+
 # service configuration
 
 - name: 'Test if configuration file exists for {{ openvpn__instance.name }}'
@@ -215,7 +296,7 @@
     src: '{{ openvpn__instance.options.mode }}.conf.j2'
     dest: "{{ openvpn__configuration_file|replace('%i', openvpn__instance.name) }}"
     owner: root
-    group: root
+    group: '{{ openvpn__service_group }}'
     mode: 0640
   when: openvpn__instance.state|d('present') == 'present'
   register: _openvpn__instance_config
